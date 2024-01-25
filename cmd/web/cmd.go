@@ -1,4 +1,4 @@
-package server
+package web
 
 import (
 	"github.com/spf13/cobra"

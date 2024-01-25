@@ -87,60 +87,60 @@ func parse2(payload Payload) error {
 }
 
 /*
-value `fill:"field,sep=_,default=df,require,empty"`
+value `env:"field,sep=_,default=df,require,empty"`
 */
 func parseValue(payload Payload) (string, error) {
-	fillStr, _ := payload.StructField.Tag.Lookup("fill")
+	envStr, _ := payload.StructField.Tag.Lookup("env")
 	var value string
-	fillName := strings.ToUpper(payload.StructField.Name)
-	fillRequire := false
-	fillDefault := ""
+	envName := strings.ToUpper(payload.StructField.Name)
+	envRequire := false
+	envDefault := ""
 	sep := "_"
-	for index, str := range strings.Split(fillStr, ",") {
+	for index, str := range strings.Split(envStr, ",") {
 		if index == 0 && str != "" {
-			fillName = str
+			envName = str
 		} else if strings.Contains(str, "require") {
-			fillRequire = true
+			envRequire = true
 		} else if strings.Contains(str, "default=") {
-			fillDefault = strings.TrimPrefix(str, "default=")
+			envDefault = strings.TrimPrefix(str, "default=")
 		} else if strings.Contains(str, "sep=") {
 			sep = strings.TrimPrefix(str, "sep=")
 		} else if strings.Contains(str, "empty") {
-			fillName = ""
+			envName = ""
 		}
 	}
 	if payload.Opt&OptEnv == OptEnv {
 		if payload.Prefix != "" {
-			if fillName == "" {
-				fillName = payload.Prefix
+			if envName == "" {
+				envName = payload.Prefix
 			} else {
-				fillName = fmt.Sprintf("%s%s%s", payload.Prefix, sep, fillName)
+				envName = fmt.Sprintf("%s%s%s", payload.Prefix, sep, envName)
 			}
 		}
-		envValue, exist := os.LookupEnv(fillName)
+		envValue, exist := os.LookupEnv(envName)
 		if exist {
 			value = envValue
 		}
 	}
-	if value == "" && fillDefault != "" {
-		value = fillDefault
+	if value == "" && envDefault != "" {
+		value = envDefault
 	}
-	if value == "" && fillRequire {
-		return "", fmt.Errorf("%s require", fillName)
+	if value == "" && envRequire {
+		return "", fmt.Errorf("%s require", envName)
 	}
 	return value, nil
 }
 
 /*
-struct `fill:"field,sep=_,default=df,require,empty"`
+struct `env:"field,sep=_,default=df,require,empty"`
 */
 func parseStruct(payload Payload) error {
 	payload.Value = payload.Field
 	fieldName := strings.ToUpper(payload.StructField.Name)
 	sep := "_"
-	fillStr, exist := payload.StructField.Tag.Lookup("fill")
+	envStr, exist := payload.StructField.Tag.Lookup("env")
 	if exist {
-		for index, str := range strings.Split(fillStr, ",") {
+		for index, str := range strings.Split(envStr, ",") {
 			if index == 0 && str != "" {
 				fieldName = str
 			} else if strings.Contains(str, "sep=") {
