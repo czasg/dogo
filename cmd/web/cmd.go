@@ -2,7 +2,6 @@ package web
 
 import (
 	"github.com/spf13/cobra"
-	"proj/cmd"
 	"proj/internal/server"
 	"proj/internal/server/webserver"
 	"proj/public/config"
@@ -10,7 +9,7 @@ import (
 )
 
 var (
-	serverCmd = &cobra.Command{
+	ServerCmd = &cobra.Command{
 		Use:   "webserver",
 		Short: "web server",
 		Long:  "start a web server",
@@ -23,7 +22,3 @@ var (
 		},
 	}
 )
-
-func init() {
-	cmd.App.AddCommand(serverCmd)
-}

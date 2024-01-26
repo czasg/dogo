@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"proj/cmd/agent"
+	"proj/cmd/web"
 )
 
 var App = &cobra.Command{
@@ -14,4 +16,11 @@ var App = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		panic("not found app command")
 	},
+}
+
+func init() {
+	App.AddCommand(
+		web.ServerCmd,
+		agent.AgentCmd,
+	)
 }

@@ -18,7 +18,9 @@ func GetConfig() *Config {
 }
 
 func init() {
-	if err := ParseEnv(cfg); err != nil {
+	config := Config{}
+	if err := ParseEnv(&config); err != nil {
 		panic(err)
 	}
+	cfg = &config
 }

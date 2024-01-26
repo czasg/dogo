@@ -2,11 +2,10 @@ package agent
 
 import (
 	"github.com/spf13/cobra"
-	"proj/cmd"
 )
 
 var (
-	agentCmd = &cobra.Command{
+	AgentCmd = &cobra.Command{
 		Use:   "agent",
 		Short: "agent server",
 		Long:  `start a agent server`,
@@ -15,7 +14,3 @@ var (
 		},
 	}
 )
-
-func init() {
-	cmd.App.AddCommand(agentCmd)
-}
