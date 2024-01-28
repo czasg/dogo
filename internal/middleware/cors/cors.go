@@ -19,18 +19,18 @@ func NewCorsHandler(configFunc ...ConfigFunc) gin.HandlerFunc {
 	case true:
 		allowCredentials = "true"
 	case false:
-		allowCredentials = "true"
+		allowCredentials = "false"
 	}
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", allowOrigins)
+		c.Header("Access-Control-Allow-Methods", allowMethods)
+		c.Header("Access-Control-Allow-Headers", allowHeaders)
+		c.Header("Access-Control-Allow-Credentials", allowCredentials)
 		if ctx.Request.Method == http.MethodOptions {
-			ctx.Header("Access-Control-Allow-Origin", allowOrigins)
-			ctx.Header("Access-Control-Allow-Methods", allowMethods)
-			ctx.Header("Access-Control-Allow-Headers", allowHeaders)
-			ctx.Header("Access-Control-Allow-Credentials", allowCredentials)
-			ctx.Abort()
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		ctx.Next()
+		c.Next()
 	}
 }
 
