@@ -1,0 +1,117 @@
+stages:
+  - check
+  - test
+  - quality
+  - build
+  - deploy
+
+check-branch:
+  stage: check
+  image: ubuntu:latest
+  script:
+    - git log HEAD..origin/master
+  tags:
+    - ${GITLAB_RUNNER_TAG}
+
+check-golangci-lint:
+  stage: check
+  image: golangci-lint:latest
+  script:
+    - golangci-lint run --out-format=checkstyle --issues-exit-code=0 > golangci-lint.xml
+  artifacts:
+    paths:
+      - golangci-lint.xml
+  only:
+    - merge_requests
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'  # Run for all changes to a merge request's source branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH       # Run for all changes to the default branch
+
+test-unit-test:
+  stage: test
+  image: golang:1.21
+  script:
+    - go env -w GOPROXY=https://goproxy.cn,direct
+    - go mod vendor
+    - go test -race -v -coverpkg=./... -covermode=count -mod=vendor -timeout=90s -coverprofile=coverage.out ./... 2>&1
+    - gocover-cobertura <coverage.out >coverage.xml
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - coverage.out
+  only:
+    - merge_requests
+    - web
+
+test-unit-test-failure:
+  stage: quality
+  image: ubuntu:latest
+  when: on_failure
+  script:
+    - echo "unit test failure"
+
+quality-sonar:
+  stage: quality
+  image: sonar-scanner-cli:latest
+  dependencies:
+    - test-unit-test
+  script:
+    - sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.projectVersion=$CI_COMMIT_REF_NAME -Dsonar.projectKey=$CI_PROJECT_NAME -Dsonar.projectName="$CI_PROJECT_TITLE" -Dsonar.qualitygate.wait=true 2>&1 | tee .sonar.tmp || echo "quality gate failed"
+  only:
+    - merge_requests
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'  # Run for all changes to a merge request's source branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH       # Run for all changes to the default branch
+
+build-image-sha:
+  stage: build
+  image: bitnami/kaniko:latest
+  variables:
+    CONTAINER_IMAGE: $HARBOR:$CI_COMMIT_SHORT_SHA
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"hub.docker.com\":{\"auth\":\"$(printf "%s:%s" "${HARBOR_USER}" "${HARBOR_PWD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CONTAINER_IMAGE}"
+    - envsubst '$CONTAINER_IMAGE $CI_COMMIT_TAG $CI_PROJECT_NAME $CI_COMMIT_SHORT_SHA' < k8s.tmpl.yaml > k8s.yaml
+  only:
+    - web
+  artifacts:
+    paths:
+      - k8s.yaml
+
+build-image-tag:
+  stage: build
+  image: bitnami/kaniko:latest
+  variables:
+    CONTAINER_IMAGE: $HARBOR:$CI_COMMIT_TAG
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"hub.docker.com\":{\"auth\":\"$(printf "%s:%s" "${HARBOR_USER}" "${HARBOR_PWD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CONTAINER_IMAGE}"
+    - envsubst '$CONTAINER_IMAGE $CI_COMMIT_TAG $CI_PROJECT_NAME $CI_COMMIT_SHORT_SHA' < k8s.tmpl.yaml > k8s.yaml
+  only:
+    - tags
+  artifacts:
+    paths:
+      - k8s.yaml
+
+deploy_k8s:
+  stage: deploy
+  image: kubectl:latest
+  script:
+    - kubectl apply --kubeconfig $KUBE_CONFIG -f deploy.yaml --namespace $K8S_NAMESPACE
+  only:
+    - web
+    - tags
