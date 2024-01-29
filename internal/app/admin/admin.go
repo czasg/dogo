@@ -2,7 +2,7 @@ package admin
 
 import "github.com/gin-gonic/gin"
 
-func Register(app gin.IRouter) {
+func Bind(app gin.IRouter) {
 	app.POST("/login")
 	app.POST("/logout")
 	// user

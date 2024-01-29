@@ -2,7 +2,8 @@ package webserver
 
 import (
 	"github.com/gin-gonic/gin"
-	"proj/internal/api/health"
+	"proj/internal/app/admin"
+	"proj/internal/app/health"
 	"proj/internal/middleware/cors"
 	"proj/internal/middleware/jwt"
 	"proj/internal/middleware/trace"
@@ -20,6 +21,7 @@ func NewApp() *gin.Engine {
 			jwt.IgnoreSuffix([]string{"/login"}),
 		),
 	)
-	health.Register(app)
+	health.Bind(app)
+	admin.Bind(app)
 	return app
 }
