@@ -15,10 +15,9 @@ func NewCorsHandler(configFunc ...ConfigFunc) gin.HandlerFunc {
 	allowMethods := strings.Join(config.allowMethods, ",")
 	allowHeaders := strings.Join(config.allowHeaders, ",")
 	var allowCredentials string
-	switch config.allowCredentials {
-	case true:
+	if config.allowCredentials {
 		allowCredentials = "true"
-	case false:
+	} else {
 		allowCredentials = "false"
 	}
 	return func(c *gin.Context) {
@@ -26,7 +25,7 @@ func NewCorsHandler(configFunc ...ConfigFunc) gin.HandlerFunc {
 		c.Header("Access-Control-Allow-Methods", allowMethods)
 		c.Header("Access-Control-Allow-Headers", allowHeaders)
 		c.Header("Access-Control-Allow-Credentials", allowCredentials)
-		if ctx.Request.Method == http.MethodOptions {
+		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}

@@ -63,8 +63,7 @@ func NewJwtHandler(configFunc ...ConfigFunc) gin.HandlerFunc {
 		}
 		err := jwt.Valid(token)
 		if err != nil {
-			c.Status(http.StatusForbidden)
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		c.Next()
