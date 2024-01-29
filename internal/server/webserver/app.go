@@ -15,7 +15,10 @@ func NewApp() *gin.Engine {
 		gin.Recovery(),
 		trace.NewTraceHandler(),
 		cors.NewCorsHandler(),
-		jwt.NewJwtHandler(jwt.IgnorePrefix([]string{"/"})),
+		jwt.NewJwtHandler(
+			jwt.IgnorePrefix([]string{"/readiness", "/liveness"}),
+			jwt.IgnoreSuffix([]string{"/login"}),
+		),
 	)
 	health.Register(app)
 	return app

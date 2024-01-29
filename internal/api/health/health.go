@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func Register(app *gin.Engine) {
+func Register(app gin.IRouter) {
 	app.GET("/readiness", noContentHandler)
 	app.GET("/liveness", noContentHandler)
 }
