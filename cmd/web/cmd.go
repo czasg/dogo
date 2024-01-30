@@ -15,7 +15,7 @@ var (
 		Long:  "start a web server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := lifecycle.RootContext
-			cfg := config.GetConfig()
+			cfg := config.Config()
 			app := webserver.NewApp()
 			return server.Run(ctx, app, cfg.Http)
 		},

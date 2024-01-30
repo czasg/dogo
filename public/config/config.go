@@ -1,8 +1,8 @@
 package config
 
-var cfg *Config
+var cfg = &Cfg{}
 
-type Config struct {
+type Cfg struct {
 	Http  HttpConfig  `env:"HTTP"`
 	Redis RedisConfig `env:"REDIS"`
 }
@@ -23,14 +23,12 @@ type RedisConfig struct {
 	MinIdleSize int    `env:"MIN_IDLE_SIZE,default=1"`
 }
 
-func GetConfig() *Config {
+func Config() *Cfg {
 	return cfg
 }
 
 func init() {
-	config := Config{}
-	if err := ParseEnv(&config); err != nil {
+	if err := ParseEnv(cfg); err != nil {
 		panic(err)
 	}
-	cfg = &config
 }
