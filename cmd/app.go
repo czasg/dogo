@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"proj/cmd/agent"
+	"proj/cmd/initialize"
 	"proj/cmd/web"
 )
 
@@ -21,6 +21,6 @@ var App = &cobra.Command{
 func init() {
 	App.AddCommand(
 		web.ServerCmd,
-		agent.AgentCmd,
+		initialize.InitCmd,
 	)
 }

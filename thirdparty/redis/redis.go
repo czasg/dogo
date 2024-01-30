@@ -2,11 +2,11 @@ package redis
 
 import (
 	"context"
-	"proj/public/config"
 	"github.com/redis/go-redis/v9"
+	"proj/public/config"
 )
 
-func NewRedis(ctx context.Context, config.RedisConfig) (*redis.Client, error) {
+func NewRedis(ctx context.Context, cfg config.RedisConfig) (*redis.Client, error) {
 	ins := redis.NewClient(&redis.Options{
 		Addr:         cfg.Address,
 		Password:     cfg.Password,
