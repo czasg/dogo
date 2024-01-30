@@ -3,15 +3,15 @@ package model
 import "time"
 
 type User struct {
-	ID          int
-	Name        string
-	CreatedTime time.Time
-	UpdatedTime time.Time
+	ID        int `gorm:"primaryKey"`
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Role struct {
-	ID          int
-	Name        string
-	CreatedTime time.Time
-	UpdatedTime time.Time
+	ID        int `gorm:"primaryKey"`
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

@@ -12,6 +12,7 @@ import (
 func NewApp() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
+	app.ContextWithFallback = true
 	app.Use(
 		gin.Recovery(),
 		trace.NewTraceHandler(),
