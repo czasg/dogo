@@ -1,11 +1,16 @@
 package web
 
 import (
+	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
 	"proj/internal/server"
 	"proj/internal/server/webserver"
 	"proj/lifecycle"
 	"proj/public/config"
+	"proj/thirdparty/cache"
+	"proj/thirdparty/store"
 )
 
 var (
@@ -21,3 +26,23 @@ var (
 		},
 	}
 )
+
+func init() {
+	lifecycle.InjectMySQL(func() *gorm.DB {
+		db, err := store.NewMySQL(lifecycle.RootContext, config.Config().MySQL)
+		if err != nil {
+			logrus.WithError(err).Panic("init mysql failure")
+		}
+		return db
+	})
+}
+
+func init() {
+	lifecycle.InjectRedis(func() *redis.Client {
+		rds, err := cache.NewRedis(lifecycle.RootContext, config.Config().Redis)
+		if err != nil {
+			logrus.WithError(err).Panic("init redis failure")
+		}
+		return rds
+	})
+}
