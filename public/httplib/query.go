@@ -1,11 +1,14 @@
 package httplib
 
-import "github.com/gin-gonic/gin"
+import "gorm.io/gorm"
 
 type QueryParams struct {
-	PageSize int    `json:"pageSize"`
-	PageNum  int    `json:"pageNum"`
-	Sort     string `json:"sort"`
+	PageSize int                    `json:"pageSize"`
+	PageNum  int                    `json:"pageNum"`
+	Sort     string                 `json:"sort"`
+	Where    map[string]interface{} `json:"-"`
 }
 
-func Query(c *gin.Context) {}
+func (q *QueryParams) Bind(db *gorm.DB) *gorm.DB {
+	return db.Where(q.Where).Order(q.Sort).Limit(min(max(q.PageSize, 10), 100)).Offset(q.PageNum)
+}

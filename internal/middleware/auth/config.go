@@ -1,4 +1,4 @@
-package jwt
+package auth
 
 func NewDefaultConfig() *Config {
 	return &Config{

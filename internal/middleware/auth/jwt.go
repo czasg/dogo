@@ -1,4 +1,4 @@
-package jwt
+package auth
 
 import (
 	"encoding/base64"
@@ -75,20 +75,23 @@ type Jwt struct {
 	Config *Config
 }
 
-type JWTPayload map[string]interface{}
+type JwtPayload struct {
+	Une   string `json:"une"`
+	Uid   int64  `json:"uid"`
+	Rid   int64  `json:"rid"`
+	Rne   string `json:"rne"`
+	Exp   int64  `json:"exp"`
+	Admin bool   `json:"admin"`
+}
 
-func (j Jwt) Encrypt(data JWTPayload) ([]byte, error) {
-	// payload
-	if data == nil {
-		data = make(JWTPayload)
-	}
-	data["exp"] = time.Now().Unix() + j.Config.expire
-	payloadB64, err := j.encrypt(data)
+func (j Jwt) Encrypt(payload JwtPayload) ([]byte, error) {
+	payload.Exp = time.Now().Unix() + j.Config.expire
+	payloadB64, err := j.encrypt(payload)
 	if err != nil {
 		return nil, err
 	}
 	// header
-	header := JWTPayload{
+	header := map[string]string{
 		"alg": "HS256",
 		"typ": "JWT",
 	}
@@ -106,7 +109,7 @@ func (j Jwt) Encrypt(data JWTPayload) ([]byte, error) {
 	return []byte(sb.String()), nil
 }
 
-func (j Jwt) encrypt(data map[string]interface{}) (string, error) {
+func (j Jwt) encrypt(data interface{}) (string, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return "", err
@@ -114,7 +117,7 @@ func (j Jwt) encrypt(data map[string]interface{}) (string, error) {
 	return base64.StdEncoding.EncodeToString(body), nil
 }
 
-func (j Jwt) Decrypt(token string) (JWTPayload, error) {
+func (j Jwt) Decrypt(token string) (*JwtPayload, error) {
 	ss := strings.Split(token, ".")
 	if len(ss) != 3 {
 		return nil, JwtTokenInvalidErr
@@ -123,12 +126,12 @@ func (j Jwt) Decrypt(token string) (JWTPayload, error) {
 	if err != nil {
 		return nil, err
 	}
-	payload := make(JWTPayload)
+	payload := JwtPayload{}
 	err = json.Unmarshal(payloadBody, &payload)
 	if err != nil {
 		return nil, err
 	}
-	return payload, nil
+	return &payload, nil
 }
 
 func (j Jwt) Valid(token string) error {

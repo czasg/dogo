@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"proj/internal/app/admin"
 	"proj/internal/app/health"
+	"proj/internal/middleware/auth"
 	"proj/internal/middleware/cors"
-	"proj/internal/middleware/jwt"
 	"proj/internal/middleware/trace"
 )
 
@@ -17,9 +17,9 @@ func NewApp() *gin.Engine {
 		gin.Recovery(),
 		trace.NewTraceHandler(),
 		cors.NewCorsHandler(),
-		jwt.NewJwtHandler(
-			jwt.IgnorePrefix([]string{"/readiness", "/liveness"}),
-			jwt.IgnoreSuffix([]string{"/login"}),
+		auth.NewJwtHandler(
+			auth.IgnorePrefix([]string{"/readiness", "/liveness"}),
+			auth.IgnoreSuffix([]string{"/login"}),
 		),
 	)
 	health.Bind(app)
