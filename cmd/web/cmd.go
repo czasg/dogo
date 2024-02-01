@@ -28,21 +28,20 @@ var (
 )
 
 func init() {
-	lifecycle.InjectMySQL(func() *gorm.DB {
-		db, err := store.NewMySQL(lifecycle.RootContext, config.Config().MySQL)
-		if err != nil {
-			logrus.WithError(err).Panic("init mysql failure")
-		}
-		return db
-	})
-}
-
-func init() {
-	lifecycle.InjectRedis(func() *redis.Client {
-		rds, err := cache.NewRedis(lifecycle.RootContext, config.Config().Redis)
-		if err != nil {
-			logrus.WithError(err).Panic("init redis failure")
-		}
-		return rds
-	})
+	lifecycle.Inject(
+		func() *gorm.DB {
+			db, err := store.NewMySQL(lifecycle.RootContext, config.Config().MySQL)
+			if err != nil {
+				logrus.WithError(err).Panic("init mysql failure")
+			}
+			return db
+		},
+		func() *redis.Client {
+			rds, err := cache.NewRedis(lifecycle.RootContext, config.Config().Redis)
+			if err != nil {
+				logrus.WithError(err).Panic("init redis failure")
+			}
+			return rds
+		},
+	)
 }

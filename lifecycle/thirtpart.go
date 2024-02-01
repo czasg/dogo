@@ -10,24 +10,19 @@ var (
 	Redis *redis.Client
 )
 
-func InjectMySQL(db interface{}) {
-	switch db.(type) {
-	case *gorm.DB:
-		MySQL = db.(*gorm.DB)
-	case func() *gorm.DB:
-		MySQL = db.(func() *gorm.DB)()
-	default:
-		panic("invalid mysql type")
-	}
-}
-
-func InjectRedis(rds interface{}) {
-	switch rds.(type) {
-	case *redis.Client:
-		Redis = rds.(*redis.Client)
-	case func() *redis.Client:
-		Redis = rds.(func() *redis.Client)()
-	default:
-		panic("invalid redis type")
+func Inject(objs ...interface{}) {
+	for _, obj := range objs {
+		switch ins := obj.(type) {
+		case *gorm.DB:
+			MySQL = ins
+		case func() *gorm.DB:
+			MySQL = ins()
+		case *redis.Client:
+			Redis = ins
+		case func() *redis.Client:
+			Redis = ins()
+		default:
+			panic("invalid inject type")
+		}
 	}
 }
