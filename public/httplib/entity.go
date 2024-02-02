@@ -1,6 +1,7 @@
 package httplib
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,11 +20,20 @@ func (hr HttpResponse) Error() string {
 	return ""
 }
 
-func OK(c *gin.Context, data interface{}) {
+func Success(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, HttpResponse{
 		Data: data,
 	})
 }
 
-func ERROR(c *gin.Context, err error) {
+func Failure(c *gin.Context, err error) {
+	var resp HttpResponse
+	if errors.As(err, &resp) {
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	c.JSON(http.StatusOK, HttpResponse{
+		Code:    99999,
+		Message: err.Error(),
+	})
 }
