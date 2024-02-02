@@ -11,13 +11,12 @@ import (
 )
 
 type User struct {
-	ID        int64          `json:"id" gorm:"primaryKey"`
-	Name      string         `json:"name"`
-	Alias     string         `json:"alias"`
-	Enable    bool           `json:"enable"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `json:"deletedAt"`
+	ID        int64     `json:"id" gorm:"primaryKey"`
+	Name      string    `json:"name"`
+	Alias     string    `json:"alias"`
+	Enable    bool      `json:"enable"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (User) TableName() string {
@@ -110,12 +109,38 @@ type Role struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-type RoleService struct{}
+type RoleService struct {
+	DB *gorm.DB
+}
+
+func (rs *RoleService) Query(ctx context.Context, query *httplib.QueryParams) ([]Role, error) {
+	roles := []Role{}
+	err := query.Bind(rs.DB.WithContext(ctx)).Find(&roles).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	return roles, nil
+}
+
+/*
+CREATE TABLE user_roles (
+    user_id INT,
+    role_id INT,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (role_id) REFERENCES role(id)
+);
+*/
 
 type UserRole struct {
-	ID        int64
-	UserID    int64
-	RoleID    int64
+	UserID    int64     `gorm:"primaryKey;autoIncrement:false"`
+	RoleID    int64     `gorm:"primaryKey;autoIncrement:false"`
+	User      User      `gorm:"foreignKey:UserID"`
+	Role      Role      `gorm:"foreignKey:RoleID"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (UserRole) TableName() string {
+	return "user_roles"
 }
