@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"proj/public/httplib"
 	"time"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type User struct {
@@ -44,16 +45,14 @@ type UserService struct {
 }
 
 func (us *UserService) Create(ctx context.Context, user *User, userDetail *UserDetail) error {
-	return us.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(user).Error; err != nil {
-			return fmt.Errorf("failed to create user: %w", err)
-		}
-		userDetail.UserID = user.ID
-		if err := tx.Create(userDetail).Error; err != nil {
-			return fmt.Errorf("failed to create user detail: %w", err)
-		}
-		return nil
-	})
+	if err := us.DB.WithContext(ctx).Create(user).Error; err != nil {
+		return fmt.Errorf("failed to create user: %w", err)
+	}
+	userDetail.UserID = user.ID
+	if err := us.DB.WithContext(ctx).Create(userDetail).Error; err != nil {
+		return fmt.Errorf("failed to create user detail: %w", err)
+	}
+	return nil
 }
 
 func (us *UserService) DeleteByID(ctx context.Context, ids ...int) error {
@@ -61,6 +60,9 @@ func (us *UserService) DeleteByID(ctx context.Context, ids ...int) error {
 }
 
 func (us *UserService) UpdateUserByID(ctx context.Context, id int64, upt map[string]interface{}) (*User, error) {
+	if len(upt) < 1 {
+		return nil, errors.New("invalid action")
+	}
 	user := User{ID: id}
 	if err := us.DB.WithContext(ctx).Clauses(clause.Returning{}).Updates(upt).Error; err != nil {
 		return nil, err
@@ -75,6 +77,18 @@ func (us *UserService) Query(ctx context.Context, query *httplib.QueryParams) ([
 		return nil, err
 	}
 	return users, nil
+}
+
+func (us *UserService) QueryByID(ctx context.Context, id int64) (*User, *UserDetail, error) {
+	user := User{ID: id}
+	userDetail := UserDetail{UserID: id}
+	if err := us.DB.WithContext(ctx).First(&user).Error; err != nil {
+		return nil, nil, err
+	}
+	if err := us.DB.WithContext(ctx).First(&userDetail).Error; err != nil {
+		return nil, nil, err
+	}
+	return &user, &userDetail, nil
 }
 
 type Role struct {
