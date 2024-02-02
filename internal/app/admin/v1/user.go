@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"proj/internal/domain/model"
 	"proj/public/httplib"
-
 	"github.com/gin-gonic/gin"
 )
 
