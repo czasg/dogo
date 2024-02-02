@@ -190,6 +190,27 @@ func (ua *UserApp) UpdateUserPassword(c *gin.Context) {
 	httplib.Success(c, nil)
 }
 
+func (ua *UserApp) UpdateUserRole(c *gin.Context) {
+	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	req := struct {
+		RoleID []int64 `json:"roleID"`
+	}{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	err = ua.userService.UpdateUserRoleByID(c, uid, req.RoleID)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	httplib.Success(c, nil)
+}
+
 func (ua *UserApp) UpdateUserEnable(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {

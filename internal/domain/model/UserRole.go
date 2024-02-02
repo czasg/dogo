@@ -80,6 +80,23 @@ func (us *UserService) UpdateUserDetailByUserID(ctx context.Context, id int64, u
 	return &userDetail, nil
 }
 
+func (us *UserService) UpdateUserRoleByID(ctx context.Context, uid int64, rid []int64) error {
+	if err := us.DB.WithContext(ctx).Where("user_id = ?", uid).Delete(&UserRole{}).Error; err != nil {
+		return err
+	}
+	ur := []UserRole{}
+	for _, id := range rid {
+		ur = append(ur, UserRole{
+			UserID: uid,
+			RoleID: id,
+		})
+	}
+	if err := us.DB.WithContext(ctx).CreateInBatches(ur, 100).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (us *UserService) Query(ctx context.Context, query *httplib.QueryParams) ([]User, error) {
 	users := []User{}
 	err := query.Bind(us.DB.WithContext(ctx)).Find(&users).Error
@@ -101,6 +118,14 @@ func (us *UserService) QueryByID(ctx context.Context, id int64) (*User, *UserDet
 	return &user, &userDetail, nil
 }
 
+func (us *UserService) ExistsByUserID(ctx context.Context, ids ...int64) (bool, error) {
+	users := []User{}
+	if err := us.DB.WithContext(ctx).Select([]string{"id"}).Find(users, ids).Error; err != nil {
+		return false, err
+	}
+	return len(users) == len(ids), nil
+}
+
 type Role struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name"`
@@ -120,6 +145,14 @@ func (rs *RoleService) Query(ctx context.Context, query *httplib.QueryParams) ([
 		return nil, err
 	}
 	return roles, nil
+}
+
+func (rs *RoleService) ExistsByRoleID(ctx context.Context, ids ...int64) (bool, error) {
+	roles := []Role{}
+	if err := rs.DB.WithContext(ctx).Select([]string{"id"}).Find(roles, ids).Error; err != nil {
+		return false, err
+	}
+	return len(roles) == len(ids), nil
 }
 
 /*
