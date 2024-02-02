@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type User struct {
@@ -55,7 +54,7 @@ func (us *UserService) Create(ctx context.Context, user *User, userDetail *UserD
 	return nil
 }
 
-func (us *UserService) DeleteByID(ctx context.Context, ids ...int) error {
+func (us *UserService) DeleteByID(ctx context.Context, ids ...int64) error {
 	return us.DB.WithContext(ctx).Delete(&User{}, ids).Error
 }
 
@@ -64,10 +63,22 @@ func (us *UserService) UpdateUserByID(ctx context.Context, id int64, upt map[str
 		return nil, errors.New("invalid action")
 	}
 	user := User{ID: id}
-	if err := us.DB.WithContext(ctx).Clauses(clause.Returning{}).Updates(upt).Error; err != nil {
+	if err := us.DB.WithContext(ctx).Model(&user).Updates(upt).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (us *UserService) UpdateUserDetailByUserID(ctx context.Context, id int64, upt map[string]interface{}) (*UserDetail, error) {
+	if len(upt) < 1 {
+		return nil, errors.New("invalid action")
+	}
+	userDetail := UserDetail{UserID: id}
+	err := us.DB.WithContext(ctx).Model(&userDetail).Where("user_id = ?", id).Updates(upt).Error
+	if err != nil {
+		return nil, err
+	}
+	return &userDetail, nil
 }
 
 func (us *UserService) Query(ctx context.Context, query *httplib.QueryParams) ([]User, error) {
@@ -85,7 +96,7 @@ func (us *UserService) QueryByID(ctx context.Context, id int64) (*User, *UserDet
 	if err := us.DB.WithContext(ctx).First(&user).Error; err != nil {
 		return nil, nil, err
 	}
-	if err := us.DB.WithContext(ctx).First(&userDetail).Error; err != nil {
+	if err := us.DB.WithContext(ctx).Where("user_id = ?", id).First(&userDetail).Error; err != nil {
 		return nil, nil, err
 	}
 	return &user, &userDetail, nil

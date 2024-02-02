@@ -20,6 +20,13 @@ func (hr HttpResponse) Error() string {
 	return ""
 }
 
+func NewErrorResponse(err string) error {
+	return HttpResponse{
+		Code:    99999,
+		Message: err,
+	}
+}
+
 func Success(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, HttpResponse{
 		Data: data,
