@@ -13,15 +13,16 @@ func Bind(app gin.IRouter) {
 		admin.POST("/logout", v1.Logout) // user logout
 	}
 	{
+		ua := &v1.UserApp{}
 		// user
-		admin.GET("/users", v1.UserList)  // get user list
-		admin.GET("/user/:uid/details")   // get user details by user-id
-		admin.POST("/users")              // new user
-		admin.POST("/user/:uid/details")  // upt user details by user-id
-		admin.POST("/user/:uid/password") // upt user password by user-id
-		admin.POST("/user/:uid/role")     // upt user role by user-id
-		admin.POST("/user/:uid/enable")   // upt user enable by user-id
-		admin.DELETE("/user/:uid")        // del user by user-id
+		admin.GET("/users", ua.UserList)                // get user list
+		admin.GET("/user/:uid/details", ua.UserDetails) // get user details by user-id
+		admin.POST("/users")                            // new user
+		admin.POST("/user/:uid/details")                // upt user details by user-id
+		admin.POST("/user/:uid/password")               // upt user password by user-id
+		admin.POST("/user/:uid/role")                   // upt user role by user-id
+		admin.POST("/user/:uid/enable")                 // upt user enable by user-id
+		admin.DELETE("/user/:uid")                      // del user by user-id
 	}
 	{
 		// role

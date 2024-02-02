@@ -12,6 +12,7 @@ type User struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name"`
 	Alias     string    `json:"alias"`
+	Password  string    `json:"-"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
