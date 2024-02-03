@@ -19,15 +19,16 @@ func Bind(app gin.IRouter) {
 		admin.POST("/user/:uid/name", ua.UpdateUserDetail)       // upt user details by user-id
 		admin.POST("/user/:uid/details", ua.UpdateUserDetail)    // upt user details by user-id
 		admin.POST("/user/:uid/password", ua.UpdateUserPassword) // upt user password by user-id
-		admin.POST("/user/:uid/role", ua.UpdateUserRole)         // upt user role by user-id
+		admin.GET("/user/:uid/roles")                            // get user role by user-id
+		admin.POST("/user/:uid/roles")                           // upt user role by user-id
 		admin.POST("/user/:uid/enable", ua.UpdateUserEnable)     // upt user enable by user-id
 		admin.DELETE("/user/:uid/record", ua.DeleteUser)         // del user by user-id
 	}
 	{
+		ra := v1.DefaultRoleApp()
 		// role
-		admin.GET("/roles")
-		admin.GET("/user/:uid/roles")
-		admin.POST("/user/:uid/roles")
+		admin.GET("/roles", ra.List)
+		admin.POST("/roles", ra.Create)
 	}
 	{
 		// perm
