@@ -15,6 +15,7 @@ type User struct {
 	Name      string    `json:"name"`
 	Alias     string    `json:"alias"`
 	Enable    bool      `json:"enable"`
+	Admin     bool      `json:"admin"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }

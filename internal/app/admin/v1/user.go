@@ -55,7 +55,7 @@ func (app *UserApp) Login(c *gin.Context) {
 		httplib.Failure(c, fmt.Errorf("jwt token error"))
 		return
 	}
-	token, err := jwt.Encrypt(user.Name, user.ID, false)
+	token, err := jwt.Encrypt(user.Name, user.ID, user.Admin)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
@@ -65,12 +65,12 @@ func (app *UserApp) Login(c *gin.Context) {
 }
 
 func (app *UserApp) Logout(c *gin.Context) {
-	jwt, pyaload, ok := app.jwtService.Enable(c)
+	jwt, payload, ok := app.jwtService.Enable(c)
 	if !ok {
 		httplib.Failure(c, fmt.Errorf("server error"))
 		return
 	}
-	err := app.jwtService.Logout(c, jwt, pyaload)
+	err := app.jwtService.Logout(c, jwt, payload)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
