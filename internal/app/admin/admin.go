@@ -9,12 +9,10 @@ func Bind(app gin.IRouter) {
 	// admin group v1
 	admin := app.Group("/app-admin/v1")
 	{
-		admin.POST("/login", v1.Login)   // user login
-		admin.POST("/logout", v1.Logout) // user logout
-	}
-	{
 		ua := v1.DefaultUserApp()
 		// user
+		admin.POST("/login", ua.Login)                           // user login
+		admin.POST("/logout", ua.Logout)                         // user logout
 		admin.GET("/users", ua.UserList)                         // get user list
 		admin.GET("/user/:uid/details", ua.UserDetails)          // get user details by user-id
 		admin.POST("/users", ua.CreateUser)                      // new user

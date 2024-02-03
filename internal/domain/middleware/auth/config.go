@@ -2,10 +2,11 @@ package auth
 
 func NewDefaultConfig() *Config {
 	return &Config{
-		secret:     "dogo",
-		expire:     3600,
-		authKey:    "Authorization",
-		sessionKey: "jwt_token",
+		secret:           "dogo",
+		Expire:           3600,
+		AuthKey:          "Authorization",
+		SessionKey:       "jwt_token",
+		SessionKeyExpire: 3600,
 	}
 }
 
@@ -13,13 +14,14 @@ type ConfigFunc func(cfg *Config)
 
 type Config struct {
 	secret            string
-	expire            int64
+	Expire            int64
 	ignoreRoute       []string
 	ignorePrefix      []string
 	ignoreSuffix      []string
 	ignoreMethodRoute [][2]string
-	authKey           string
-	sessionKey        string
+	AuthKey           string
+	SessionKey        string
+	SessionKeyExpire  int
 }
 
 func Secret(secret string) ConfigFunc {
@@ -30,7 +32,7 @@ func Secret(secret string) ConfigFunc {
 
 func Expire(expire int64) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.expire = expire
+		cfg.Expire = expire
 	}
 }
 
@@ -60,12 +62,18 @@ func IgnoreMethodRoute(mr [][2]string) ConfigFunc {
 
 func AuthKey(authKey string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.authKey = authKey
+		cfg.AuthKey = authKey
 	}
 }
 
 func SessionKey(sessionKey string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.sessionKey = sessionKey
+		cfg.SessionKey = sessionKey
+	}
+}
+
+func SessionKeyExpire(sessionKeyExpire int) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.SessionKeyExpire = sessionKeyExpire
 	}
 }

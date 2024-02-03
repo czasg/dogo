@@ -2,8 +2,10 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"proj/internal/domain/middleware/auth"
 	"proj/internal/domain/model"
 	"proj/lifecycle"
 	"proj/public/httplib"
@@ -15,23 +17,75 @@ import (
 func DefaultUserApp() *UserApp {
 	return &UserApp{
 		userService: model.UserService{DB: lifecycle.MySQL},
+		jwtService:  auth.JwtService{Cache: lifecycle.Redis},
 		hash:        utils.NewHash(nil),
 	}
 }
 
 type UserApp struct {
 	userService model.UserService
+	jwtService  auth.JwtService
 	hash        utils.Hash
 }
 
-func (ua *UserApp) UserList(c *gin.Context) {
+func (app *UserApp) Login(c *gin.Context) {
+	req := struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	user, userDetail, err := app.userService.QueryByName(c, req.Username)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	if app.hash.Sha256([]byte(req.Password)) != userDetail.Password {
+		httplib.Failure(c, fmt.Errorf("password error"))
+		return
+	}
+	jwt, payload, ok := app.jwtService.Enable(c)
+	if !ok {
+		httplib.Failure(c, fmt.Errorf("server error"))
+		return
+	}
+	if payload.UserID != user.ID {
+		httplib.Failure(c, fmt.Errorf("jwt token error"))
+		return
+	}
+	token, err := jwt.Encrypt(user.Name, user.ID, false)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	c.SetCookie(jwt.Config.SessionKey, token, jwt.Config.SessionKeyExpire, "/", "", false, false)
+	httplib.Success(c, token)
+}
+
+func (app *UserApp) Logout(c *gin.Context) {
+	jwt, pyaload, ok := app.jwtService.Enable(c)
+	if !ok {
+		httplib.Failure(c, fmt.Errorf("server error"))
+		return
+	}
+	err := app.jwtService.Logout(c, jwt, pyaload)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	httplib.Success(c, nil)
+}
+
+func (app *UserApp) UserList(c *gin.Context) {
 	query := httplib.QueryParams{}
 	err := c.ShouldBindQuery(&query)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	users, err := ua.userService.Query(c, &query)
+	users, err := app.userService.Query(c, &query)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
@@ -39,13 +93,13 @@ func (ua *UserApp) UserList(c *gin.Context) {
 	httplib.Success(c, users)
 }
 
-func (ua *UserApp) UserDetails(c *gin.Context) {
+func (app *UserApp) UserDetails(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	user, userDetail, err := ua.userService.QueryByID(c, uid)
+	user, userDetail, err := app.userService.QueryByID(c, uid)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
@@ -56,7 +110,7 @@ func (ua *UserApp) UserDetails(c *gin.Context) {
 	})
 }
 
-func (ua *UserApp) CreateUser(c *gin.Context) {
+func (app *UserApp) CreateUser(c *gin.Context) {
 	req := struct {
 		Name     string `json:"name"`
 		Alias    string `json:"alias"`
@@ -78,7 +132,7 @@ func (ua *UserApp) CreateUser(c *gin.Context) {
 		}
 		userDetail := model.UserDetail{
 			Email:    req.Email,
-			Password: ua.hash.Sha256([]byte(req.Password)),
+			Password: app.hash.Sha256([]byte(req.Password)),
 		}
 		return us.Create(c, &user, &userDetail)
 	})
@@ -89,7 +143,7 @@ func (ua *UserApp) CreateUser(c *gin.Context) {
 	httplib.Success(c, nil)
 }
 
-func (ua *UserApp) UpdateUserName(c *gin.Context) {
+func (app *UserApp) UpdateUserName(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
 		httplib.Failure(c, err)
@@ -107,12 +161,12 @@ func (ua *UserApp) UpdateUserName(c *gin.Context) {
 		httplib.Failure(c, errors.New("invalid user name"))
 		return
 	}
-	_, err = ua.userService.UpdateUserByID(c, uid, utils.Any2Map(req))
+	_, err = app.userService.UpdateUserByID(c, uid, utils.Any2Map(req))
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	user, userDetail, err := ua.userService.QueryByID(c, uid)
+	user, userDetail, err := app.userService.QueryByID(c, uid)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
@@ -123,7 +177,7 @@ func (ua *UserApp) UpdateUserName(c *gin.Context) {
 	})
 }
 
-func (ua *UserApp) UpdateUserDetail(c *gin.Context) {
+func (app *UserApp) UpdateUserDetail(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
 		httplib.Failure(c, err)
@@ -137,12 +191,12 @@ func (ua *UserApp) UpdateUserDetail(c *gin.Context) {
 		httplib.Failure(c, err)
 		return
 	}
-	_, err = ua.userService.UpdateUserDetailByUserID(c, uid, utils.Any2Map(req))
+	_, err = app.userService.UpdateUserDetailByUserID(c, uid, utils.Any2Map(req))
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	user, userDetail, err := ua.userService.QueryByID(c, uid)
+	user, userDetail, err := app.userService.QueryByID(c, uid)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
@@ -153,7 +207,7 @@ func (ua *UserApp) UpdateUserDetail(c *gin.Context) {
 	})
 }
 
-func (ua *UserApp) UpdateUserPassword(c *gin.Context) {
+func (app *UserApp) UpdateUserPassword(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
 		httplib.Failure(c, err)
@@ -171,17 +225,17 @@ func (ua *UserApp) UpdateUserPassword(c *gin.Context) {
 		httplib.Failure(c, errors.New("new password is too short"))
 		return
 	}
-	_, userDetail, err := ua.userService.QueryByID(c, uid)
+	_, userDetail, err := app.userService.QueryByID(c, uid)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	if ua.hash.Sha256([]byte(req.OldPassword)) != userDetail.Password {
+	if app.hash.Sha256([]byte(req.OldPassword)) != userDetail.Password {
 		httplib.Failure(c, errors.New("password error"))
 		return
 	}
-	_, err = ua.userService.UpdateUserDetailByUserID(c, uid, map[string]interface{}{
-		"password": ua.hash.Sha256([]byte(req.NewPassword)),
+	_, err = app.userService.UpdateUserDetailByUserID(c, uid, map[string]interface{}{
+		"password": app.hash.Sha256([]byte(req.NewPassword)),
 	})
 	if err != nil {
 		httplib.Failure(c, err)
@@ -190,7 +244,7 @@ func (ua *UserApp) UpdateUserPassword(c *gin.Context) {
 	httplib.Success(c, nil)
 }
 
-func (ua *UserApp) UpdateUserRole(c *gin.Context) {
+func (app *UserApp) UpdateUserRole(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
 		httplib.Failure(c, err)
@@ -203,7 +257,7 @@ func (ua *UserApp) UpdateUserRole(c *gin.Context) {
 		httplib.Failure(c, err)
 		return
 	}
-	err = ua.userService.UpdateUserRoleByID(c, uid, req.RoleID)
+	err = app.userService.UpdateUserRoleByID(c, uid, req.RoleID)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
@@ -211,7 +265,7 @@ func (ua *UserApp) UpdateUserRole(c *gin.Context) {
 	httplib.Success(c, nil)
 }
 
-func (ua *UserApp) UpdateUserEnable(c *gin.Context) {
+func (app *UserApp) UpdateUserEnable(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
 		httplib.Failure(c, err)
@@ -227,7 +281,7 @@ func (ua *UserApp) UpdateUserEnable(c *gin.Context) {
 	}{
 		Enable: enable,
 	}
-	_, err = ua.userService.UpdateUserDetailByUserID(c, uid, utils.Any2Map(req))
+	_, err = app.userService.UpdateUserDetailByUserID(c, uid, utils.Any2Map(req))
 	if err != nil {
 		httplib.Failure(c, err)
 		return
@@ -235,13 +289,13 @@ func (ua *UserApp) UpdateUserEnable(c *gin.Context) {
 	httplib.Success(c, nil)
 }
 
-func (ua *UserApp) DeleteUser(c *gin.Context) {
+func (app *UserApp) DeleteUser(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	if err := ua.userService.DeleteByID(c, uid); err != nil {
+	if err := app.userService.DeleteByID(c, uid); err != nil {
 		httplib.Failure(c, err)
 		return
 	}

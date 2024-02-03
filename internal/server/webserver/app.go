@@ -4,9 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"proj/internal/app/admin"
 	"proj/internal/app/health"
-	"proj/internal/middleware/auth"
-	"proj/internal/middleware/cors"
-	"proj/internal/middleware/trace"
+	auth2 "proj/internal/domain/middleware/auth"
+	"proj/internal/domain/middleware/cors"
+	"proj/internal/domain/middleware/trace"
+	"proj/lifecycle"
 )
 
 func NewApp() *gin.Engine {
@@ -17,9 +18,10 @@ func NewApp() *gin.Engine {
 		gin.Recovery(),
 		trace.NewTraceHandler(),
 		cors.NewCorsHandler(),
-		auth.NewJwtHandler(
-			auth.IgnorePrefix([]string{"/readiness", "/liveness"}),
-			auth.IgnoreSuffix([]string{"/login"}),
+		auth2.NewJwtHandler(
+			lifecycle.Redis,
+			auth2.IgnorePrefix([]string{"/readiness", "/liveness"}),
+			auth2.IgnoreSuffix([]string{"/login"}),
 		),
 	)
 	health.Bind(app)

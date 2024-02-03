@@ -118,6 +118,22 @@ func (us *UserService) QueryByID(ctx context.Context, id int64) (*User, *UserDet
 	return &user, &userDetail, nil
 }
 
+func (us *UserService) QueryByName(ctx context.Context, name string) (*User, *UserDetail, error) {
+	user := User{}
+	userDetail := UserDetail{}
+	err := us.DB.WithContext(ctx).Where("name = ?", name).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, fmt.Errorf("user[%s] not found", name)
+		}
+		return nil, nil, err
+	}
+	if err := us.DB.WithContext(ctx).Where("user_id = ?", user.ID).First(&userDetail).Error; err != nil {
+		return nil, nil, err
+	}
+	return &user, &userDetail, nil
+}
+
 func (us *UserService) ExistsByUserID(ctx context.Context, ids ...int64) (bool, error) {
 	users := []User{}
 	if err := us.DB.WithContext(ctx).Select([]string{"id"}).Find(users, ids).Error; err != nil {
