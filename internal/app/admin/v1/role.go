@@ -11,3 +11,7 @@ type RoleApp struct{}
 func (app *RoleApp) List(c *gin.Context) {}
 
 func (app *RoleApp) Create(c *gin.Context) {}
+
+func (app *RoleApp) UpdateMenus(c *gin.Context) {}
+
+func (app *RoleApp) UpdateApis(c *gin.Context) {}

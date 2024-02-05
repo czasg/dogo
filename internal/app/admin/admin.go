@@ -29,20 +29,17 @@ func Bind(app gin.IRouter) {
 		// role
 		admin.GET("/roles", ra.List)
 		admin.POST("/roles", ra.Create)
+		admin.POST("/roles/:rid/menus", ra.UpdateMenus)
+		admin.POST("/roles/:rid/apis", ra.UpdateApis)
 	}
 	{
-		// perm
-		admin.GET("/permissions")
-		admin.GET("/role/:rid/permissions")
-		admin.POST("/role/:rid/permissions")
-
-	}
-	{
+		ma := v1.DefaultMenuApp()
 		// menu
-		admin.GET("/menus") // get menu list
+		admin.GET("/menus", ma.List) // get menu list
 	}
 	{
+		aa := v1.DefaultApiApp()
 		// apis
-		admin.GET("/apis") // get api list
+		admin.GET("/apis", aa.List) // get api list
 	}
 }
