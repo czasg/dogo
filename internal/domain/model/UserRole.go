@@ -172,6 +172,13 @@ func (rs *RoleService) ExistsByRoleID(ctx context.Context, ids ...int64) (bool, 
 	return len(roles) == len(ids), nil
 }
 
+func (us *RoleService) Create(ctx context.Context, role *Role) error {
+	if err := us.DB.WithContext(ctx).Create(role).Error; err != nil {
+		return fmt.Errorf("failed to create role: %w", err)
+	}
+	return nil
+}
+
 /*
 CREATE TABLE user_roles (
     user_id INT,

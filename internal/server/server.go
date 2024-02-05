@@ -6,11 +6,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"proj/lifecycle"
-	"proj/public/config"
 	"time"
 )
 
-func Run(ctx context.Context, handler http.Handler, cfg config.HttpConfig) error {
+func Run(ctx context.Context, handler http.Handler, cfg lifecycle.HttpConfig) error {
 	s := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
 		Handler:      handler,

@@ -1,8 +1,11 @@
-package config
+package lifecycle
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+	"proj/public/env"
+)
 
-var cfg = &Cfg{}
+var Config = &Cfg{}
 
 type Cfg struct {
 	Http  HttpConfig  `env:"HTTP"`
@@ -36,12 +39,8 @@ type RedisConfig struct {
 	MinIdleSize int    `env:"MIN_IDLE_SIZE,default=1"`
 }
 
-func Config() *Cfg {
-	return cfg
-}
-
 func init() {
-	if err := ParseEnv(cfg); err != nil {
+	if err := env.ParseEnv(Config); err != nil {
 		logrus.WithError(err).Panic("init config failure")
 	}
 }

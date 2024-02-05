@@ -8,7 +8,6 @@ import (
 	"proj/internal/server"
 	"proj/internal/server/webserver"
 	"proj/lifecycle"
-	"proj/public/config"
 	"proj/thirdparty/cache"
 	"proj/thirdparty/store"
 )
@@ -20,7 +19,7 @@ var (
 		Long:  "start a web server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := lifecycle.RootContext
-			cfg := config.Config()
+			cfg := lifecycle.Config
 			app := webserver.NewApp()
 			return server.Run(ctx, app, cfg.Http)
 		},
@@ -30,14 +29,14 @@ var (
 func init() {
 	lifecycle.Inject(
 		func() *gorm.DB {
-			db, err := store.NewMySQL(lifecycle.RootContext, config.Config().MySQL)
+			db, err := store.NewMySQL(lifecycle.RootContext, lifecycle.Config.MySQL)
 			if err != nil {
 				logrus.WithError(err).Panic("init mysql failure")
 			}
 			return db
 		},
 		func() *redis.Client {
-			rds, err := cache.NewRedis(lifecycle.RootContext, config.Config().Redis)
+			rds, err := cache.NewRedis(lifecycle.RootContext, lifecycle.Config.Redis)
 			if err != nil {
 				logrus.WithError(err).Panic("init redis failure")
 			}
