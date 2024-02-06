@@ -79,13 +79,18 @@ func (app *UserApp) Logout(c *gin.Context) {
 }
 
 func (app *UserApp) UserList(c *gin.Context) {
-	query := httplib.QueryParams{}
-	err := c.ShouldBindQuery(&query)
+	query, err := (httplib.QueryMapping{
+		StringMap: httplib.QueryStringMap{
+			Lk: map[string]string{
+				"name": "name",
+			},
+		},
+	}).Parse(c)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	users, err := app.userService.Query(c, &query)
+	users, err := app.userService.Query(c, query)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
