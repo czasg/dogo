@@ -13,16 +13,20 @@ var (
 func Inject(objs ...interface{}) {
 	for _, obj := range objs {
 		switch ins := obj.(type) {
-		case *gorm.DB:
-			MySQL = ins
 		case func() *gorm.DB:
-			MySQL = ins()
-		case *redis.Client:
-			Redis = ins
+			SetMySQL(ins())
 		case func() *redis.Client:
-			Redis = ins()
+			SetRedis(ins())
 		default:
 			panic("invalid inject type")
 		}
 	}
+}
+
+func SetMySQL(ins *gorm.DB) {
+	MySQL = ins
+}
+
+func SetRedis(ins *redis.Client) {
+	Redis = ins
 }
