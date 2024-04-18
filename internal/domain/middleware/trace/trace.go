@@ -24,6 +24,7 @@ func NewTraceHandler() gin.HandlerFunc {
 				atomic.AddInt64(&n, 1),
 			)
 		}
+		c.Set(string(TraceKey), key)
 		c.Header(string(TraceKey), key)
 		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), TraceKey, key))
 		c.Next()

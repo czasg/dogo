@@ -17,7 +17,12 @@ func NewApp() *gin.Engine {
 	app.Use(
 		gin.Recovery(),
 		trace.NewTraceHandler(),
-		cors.NewCorsHandler(),
+		cors.NewCorsHandler(
+			cors.AllowOrigins([]string{"*"}),
+			cors.AllowMethods([]string{"*"}),
+			cors.AllowHeaders([]string{"*"}),
+			cors.AllowCredentials(true),
+		),
 		auth2.NewJwtHandler(
 			lifecycle.Redis,
 			auth2.IgnorePrefix([]string{"/readiness", "/liveness"}),

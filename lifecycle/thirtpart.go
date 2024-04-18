@@ -5,6 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
+type MySQLCaller func() *gorm.DB
+type RedisCaller func() *redis.Client
+
 var (
 	MySQL *gorm.DB
 	Redis *redis.Client
@@ -12,21 +15,13 @@ var (
 
 func Inject(objs ...interface{}) {
 	for _, obj := range objs {
-		switch ins := obj.(type) {
-		case func() *gorm.DB:
-			SetMySQL(ins())
-		case func() *redis.Client:
-			SetRedis(ins())
+		switch caller := obj.(type) {
+		case MySQLCaller:
+			MySQL = caller()
+		case RedisCaller:
+			Redis = caller()
 		default:
 			panic("invalid inject type")
 		}
 	}
-}
-
-func SetMySQL(ins *gorm.DB) {
-	MySQL = ins
-}
-
-func SetRedis(ins *redis.Client) {
-	Redis = ins
 }

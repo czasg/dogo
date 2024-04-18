@@ -1,0 +1,37 @@
+version: '3'
+services:
+  webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - redis
+      - rmq
+  mysql:
+    image: bitnami/mysql:latest
+    restart: "always"
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_USER: "demo"
+      MYSQL_PASSWORD: "demo"
+      MYSQL_DATABASE: "demo"
+      MYSQL_DEFAULT_PORT_NUMBER: "3306"
+  redis:
+    image: bitnami/redis:latest
+    restart: "always"
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+      REDIS_MASTER_PORT_NUMBER: "6379"
+  rmq:
+    image: bitnami/rabbitmq:latest
+    restart: "always"
+    environment:
+      RABBITMQ_USERNAME: "demo"
+      RABBITMQ_PASSWORD: "demo"
+      RABBITMQ_NODE_PORT_NUMBER: "5672"
+      RABBITMQ_MANAGEMENT_PORT_NUMBER: "15672"

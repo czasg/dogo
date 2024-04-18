@@ -16,4 +16,4 @@ FROM ubuntu:latest
 COPY --from=firstStageBuilder /go/bin/app /usr/local/bin/app
 
 ENTRYPOINT ["app"]
-CMD ["webserver" ]
+CMD ["webserver"]

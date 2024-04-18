@@ -27,10 +27,11 @@ func Bind(app gin.IRouter) {
 	{
 		ra := v1.DefaultRoleApp()
 		// role
-		admin.GET("/roles", ra.List)
-		admin.POST("/roles", ra.Create)
-		admin.POST("/roles/:rid/menus", ra.UpdateMenus)
-		admin.POST("/roles/:rid/apis", ra.UpdateApis)
+		admin.GET("/roles", ra.List)    // get role list
+		admin.POST("/roles", ra.Create) // mew role
+		admin.POST("/role/:rid/menus", ra.UpdateMenus)
+		admin.POST("/role/:rid/apis", ra.UpdateApis)
+		admin.DELETE("/role/:rid/record", ra.UpdateApis)
 	}
 	{
 		ma := v1.DefaultMenuApp()
