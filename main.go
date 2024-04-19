@@ -7,5 +7,7 @@ import (
 )
 
 func main() {
-	panic(cmd.App.ExecuteContext(lifecycle.RootContext))
+	if err := cmd.App.ExecuteContext(lifecycle.RootContext); err != nil {
+		panic(err)
+	}
 }

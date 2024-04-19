@@ -11,7 +11,7 @@ import (
 
 func Run(ctx context.Context, handler http.Handler, cfg lifecycle.HttpConfig) error {
 	s := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Addr:         fmt.Sprintf("0.0.0.0:%d", cfg.Port),
 		Handler:      handler,
 		ReadTimeout:  time.Duration(cfg.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(cfg.WriteTimeout) * time.Second,

@@ -21,10 +21,10 @@ type HttpConfig struct {
 }
 
 type MySQLConfig struct {
-	Address         string `env:"ADDRESS,default=localhost:3309"`
+	Address         string `env:"ADDRESS,default=localhost:3306"`
 	User            string `env:"USER,default=root"`
-	Password        string `env:"USER,default=root"`
-	DB              string `env:"USER,default=dev"`
+	Password        string `env:"PASSWORD,default=root"`
+	DB              string `env:"DB,default=dev"`
 	PoolMaxIdle     int    `env:"POOL_MAX_IDLE,default=10"`
 	PoolMaxOpen     int    `env:"POOL_MAX_OPEN,default=100"`
 	PoolMaxLifeTime int    `env:"POOL_MAX_LIFE_TIME,default=3600"`

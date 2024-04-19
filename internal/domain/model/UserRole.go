@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// UserModel
 type User struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name"`
@@ -24,6 +25,7 @@ func (User) TableName() string {
 	return "users"
 }
 
+// UserDetailModel
 type UserDetail struct {
 	ID          int64     `json:"id" gorm:"primaryKey"`
 	UserID      int64     `json:"userID"`
@@ -32,7 +34,7 @@ type UserDetail struct {
 	Preference  string    `json:"preference"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
-	LastLoginAt time.Time `json:"lastLoginAt"`
+	LastLoginAt time.Time `json:"lastLoginAt" gorm:"autoCreateTime"`
 }
 
 func (UserDetail) TableName() string {
@@ -82,20 +84,20 @@ func (us *UserService) UpdateUserDetailByUserID(ctx context.Context, id int64, u
 }
 
 func (us *UserService) UpdateUserRoleByID(ctx context.Context, uid int64, rid []int64) error {
-	if err := us.DB.WithContext(ctx).Where("user_id = ?", uid).Delete(&UserRole{}).Error; err != nil {
-		return err
-	}
-	ur := []UserRole{}
-	for _, id := range rid {
-		ur = append(ur, UserRole{
-			UserID: uid,
-			RoleID: id,
-		})
-	}
-	if err := us.DB.WithContext(ctx).CreateInBatches(ur, 100).Error; err != nil {
-		return err
-	}
-	return nil
+	return us.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		err := tx.Where("user_id = ?", uid).Delete(&UserRole{}).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		ur := []UserRole{}
+		for _, id := range rid {
+			ur = append(ur, UserRole{
+				UserID: uid,
+				RoleID: id,
+			})
+		}
+		return tx.CreateInBatches(ur, 100).Error
+	})
 }
 
 func (us *UserService) Query(ctx context.Context, query *httplib.QueryParams) ([]User, error) {
@@ -124,15 +126,26 @@ func (us *UserService) QueryByName(ctx context.Context, name string) (*User, *Us
 	userDetail := UserDetail{}
 	err := us.DB.WithContext(ctx).Where("name = ?", name).First(&user).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil, fmt.Errorf("user[%s] not found", name)
-		}
 		return nil, nil, err
 	}
 	if err := us.DB.WithContext(ctx).Where("user_id = ?", user.ID).First(&userDetail).Error; err != nil {
 		return nil, nil, err
 	}
 	return &user, &userDetail, nil
+}
+
+func (us *UserService) QueryUserRoleByID(ctx context.Context, id int64) ([]Role, error) {
+	roleIds := []int{}
+	err := us.DB.WithContext(ctx).Model(&UserRole{}).Where("user_id = ?", id).Select("role_id").Scan(&roleIds).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	var roles []Role
+	err = us.DB.WithContext(ctx).Where("id IN ?", roleIds).Find(&roles).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	return roles, nil
 }
 
 func (us *UserService) ExistsByUserID(ctx context.Context, ids ...int64) (bool, error) {
@@ -143,12 +156,17 @@ func (us *UserService) ExistsByUserID(ctx context.Context, ids ...int64) (bool, 
 	return len(users) == len(ids), nil
 }
 
+// RoleModel
 type Role struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name"`
 	Alias     string    `json:"alias"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (Role) TableName() string {
+	return "roles"
 }
 
 type RoleService struct {
@@ -162,6 +180,26 @@ func (rs *RoleService) Query(ctx context.Context, query *httplib.QueryParams) ([
 		return nil, err
 	}
 	return roles, nil
+}
+
+func (rs *RoleService) QueryByName(ctx context.Context, name string) (*Role, error) {
+	var role Role
+	err := rs.DB.WithContext(ctx).Where("name = ?", name).First(&role).Error
+	if err != nil {
+		return nil, err
+	}
+	return &role, nil
+}
+
+func (rs *RoleService) UpdateRoleByID(ctx context.Context, id int64, upt map[string]interface{}) (*Role, error) {
+	if len(upt) < 1 {
+		return nil, errors.New("invalid action")
+	}
+	role := Role{ID: id}
+	if err := rs.DB.WithContext(ctx).Model(&role).Updates(upt).Error; err != nil {
+		return nil, err
+	}
+	return &role, nil
 }
 
 func (rs *RoleService) ExistsByRoleID(ctx context.Context, ids ...int64) (bool, error) {
@@ -189,9 +227,11 @@ CREATE TABLE user_roles (
 );
 */
 
+// UserRoleModel
 type UserRole struct {
-	UserID    int64     `gorm:"primaryKey;autoIncrement:false"`
-	RoleID    int64     `gorm:"primaryKey;autoIncrement:false"`
+	ID        int64     `json:"id" gorm:"primaryKey"`
+	UserID    int64     `json:"userID"`
+	RoleID    int64     `json:"roleID"`
 	User      User      `gorm:"foreignKey:UserID"`
 	Role      Role      `gorm:"foreignKey:RoleID"`
 	CreatedAt time.Time `json:"createdAt"`

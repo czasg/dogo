@@ -67,6 +67,9 @@ func NewJwtHandler(cache *redis.Client, configFunc ...ConfigFunc) gin.HandlerFun
 			c.Abort()
 			return
 		}
+		if strings.HasPrefix(token, "Bearer ") {
+			token = strings.TrimSpace(token[7:])
+		}
 		payload, err := jwt.Valid(token)
 		if err != nil {
 			c.AbortWithStatus(http.StatusForbidden)

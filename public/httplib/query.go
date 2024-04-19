@@ -32,8 +32,8 @@ func (q QueryMapping) Parse(c *gin.Context) (*QueryParams, error) {
 }
 
 type QueryStringMap struct {
-	Eq map[string]string
-	Lk map[string]string
+	Eq map[string]string // equal
+	Lk map[string]string // like
 }
 
 type QueryIntMap struct {
@@ -118,5 +118,19 @@ type QueryParams struct {
 }
 
 func (q *QueryParams) Bind(db *gorm.DB) *gorm.DB {
-	return db.Where(q.Where).Order(q.Sort).Limit(min(max(q.PageSize, 10), 100)).Offset(q.PageNum)
+	return db.Where(q.Where).Order(q.Sort).Limit(Min(Max(q.PageSize, 10), 100)).Offset(q.PageNum)
+}
+
+func Min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
+
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

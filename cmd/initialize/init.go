@@ -17,5 +17,5 @@ var (
 )
 
 func init() {
-	InitCmd.AddCommand(admin.ApiCmd)
+	InitCmd.AddCommand(admin.AdminCmd)
 }

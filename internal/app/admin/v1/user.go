@@ -46,15 +46,7 @@ func (app *UserApp) Login(c *gin.Context) {
 		httplib.Failure(c, fmt.Errorf("password error"))
 		return
 	}
-	jwt, payload, ok := app.jwtService.Enable(c)
-	if !ok {
-		httplib.Failure(c, fmt.Errorf("server error"))
-		return
-	}
-	if payload.UserID != user.ID {
-		httplib.Failure(c, fmt.Errorf("jwt token error"))
-		return
-	}
+	jwt := c.MustGet(auth.JwtKey).(*auth.Jwt)
 	token, err := jwt.Encrypt(user.Name, user.ID, user.Admin)
 	if err != nil {
 		httplib.Failure(c, err)
@@ -129,6 +121,13 @@ func (app *UserApp) CreateUser(c *gin.Context) {
 	err := lifecycle.MySQL.Transaction(func(tx *gorm.DB) error {
 		us := model.UserService{
 			DB: tx,
+		}
+		_, _, err := us.QueryByName(c, req.Name)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if err == nil {
+			return fmt.Errorf("user name[%s] has already exists.", req.Name)
 		}
 		user := model.User{
 			Name:   req.Name,
@@ -249,6 +248,20 @@ func (app *UserApp) UpdateUserPassword(c *gin.Context) {
 	httplib.Success(c, nil)
 }
 
+func (app *UserApp) UserRoleList(c *gin.Context) {
+	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	users, err := app.userService.QueryUserRoleByID(c, uid)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	httplib.Success(c, users)
+}
+
 func (app *UserApp) UpdateUserRole(c *gin.Context) {
 	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
 	if err != nil {
@@ -286,7 +299,7 @@ func (app *UserApp) UpdateUserEnable(c *gin.Context) {
 	}{
 		Enable: enable,
 	}
-	_, err = app.userService.UpdateUserDetailByUserID(c, uid, utils.Any2Map(req))
+	_, err = app.userService.UpdateUserByID(c, uid, utils.Any2Map(req))
 	if err != nil {
 		httplib.Failure(c, err)
 		return

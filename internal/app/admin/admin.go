@@ -16,31 +16,29 @@ func Bind(app gin.IRouter) {
 		admin.GET("/users", ua.UserList)                         // get user list
 		admin.GET("/user/:uid/details", ua.UserDetails)          // get user details by user-id
 		admin.POST("/users", ua.CreateUser)                      // new user
-		admin.POST("/user/:uid/name", ua.UpdateUserDetail)       // upt user details by user-id
 		admin.POST("/user/:uid/details", ua.UpdateUserDetail)    // upt user details by user-id
 		admin.POST("/user/:uid/password", ua.UpdateUserPassword) // upt user password by user-id
-		admin.GET("/user/:uid/roles")                            // get user role by user-id
-		admin.POST("/user/:uid/roles")                           // upt user role by user-id
+		admin.GET("/user/:uid/roles", ua.UserRoleList)           // get user role by user-id
+		admin.POST("/user/:uid/roles", ua.UpdateUserRole)        // upt user role by user-id
 		admin.POST("/user/:uid/enable", ua.UpdateUserEnable)     // upt user enable by user-id
 		admin.DELETE("/user/:uid/record", ua.DeleteUser)         // del user by user-id
 	}
 	{
 		ra := v1.DefaultRoleApp()
 		// role
-		admin.GET("/roles", ra.List)    // get role list
-		admin.POST("/roles", ra.Create) // mew role
-		admin.POST("/role/:rid/menus", ra.UpdateMenus)
-		admin.POST("/role/:rid/apis", ra.UpdateApis)
-		admin.DELETE("/role/:rid/record", ra.UpdateApis)
+		admin.GET("/roles", ra.List)                           // get role list
+		admin.POST("/roles", ra.Create)                        // mew role
+		admin.POST("/role/:rid/details", ra.UpdateRoleDetails) // upt role details by role-id
+		//admin.POST("/role/:rid/menus", ra.UpdateMenus)
+		//admin.POST("/role/:rid/apis", ra.UpdateApis)
+		//admin.DELETE("/role/:rid/record", ra.UpdateApis)
 	}
 	{
 		ma := v1.DefaultMenuApp()
 		// menu
-		admin.GET("/menus", ma.List) // get menu list
-	}
-	{
-		aa := v1.DefaultApiApp()
-		// apis
-		admin.GET("/apis", aa.List) // get api list
+		admin.GET("/menus", ma.List)      // get menu list
+		admin.POST("/menus")              // new root menu
+		admin.POST("/menus/:mid/sub")     // new secondary menu by menu-id
+		admin.POST("/menus/:mid/details") // upt menu details by menu-id
 	}
 }
