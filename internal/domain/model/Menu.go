@@ -9,6 +9,8 @@ type Menu struct {
 	Icon      string    `json:"icon"`
 	Route     string    `json:"route"`
 	Hide      bool      `json:"hide"`
+	RootID    int64     `json:"rootID"`
+	ParentID  int64     `json:"parentID"`
 	Level     int64     `json:"level"`
 	Order     int64     `json:"order"`
 	CreatedAt time.Time `json:"createdAt"`
