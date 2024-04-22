@@ -29,16 +29,16 @@ func Bind(app gin.IRouter) {
 		admin.GET("/roles", ra.List)                           // get role list
 		admin.POST("/roles", ra.Create)                        // mew role
 		admin.POST("/role/:rid/details", ra.UpdateRoleDetails) // upt role details by role-id
-		//admin.POST("/role/:rid/menus", ra.UpdateMenus)
+		admin.POST("/role/:rid/menus", ra.UpdateMenus)
 		//admin.POST("/role/:rid/apis", ra.UpdateApis)
 		//admin.DELETE("/role/:rid/record", ra.UpdateApis)
 	}
 	{
 		ma := v1.DefaultMenuApp()
 		// menu
-		admin.GET("/menus", ma.List)      // get menu list
-		admin.POST("/menus")              // new root menu
-		admin.POST("/menus/:mid/sub")     // new secondary menu by menu-id
-		admin.POST("/menus/:mid/details") // upt menu details by menu-id
+		admin.GET("/menus", ma.MenuList)                           // get menu list
+		admin.POST("/menus", ma.CreateMenu)                        // new root menu
+		admin.POST("/menu/:mid/secondary", ma.CreateSecondaryMenu) // new secondary menu by menu-id
+		admin.GET("/menu/:mid/details", ma.MenuDetails)            // upt menu details by menu-id
 	}
 }

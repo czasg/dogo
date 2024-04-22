@@ -21,6 +21,8 @@ var (
 				&model.Role{},
 				&model.UserRole{},
 				&model.AccessControl{},
+				&model.Menu{},
+				&model.RoleMenu{},
 			)
 		},
 	}
