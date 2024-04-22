@@ -29,9 +29,9 @@ func Bind(app gin.IRouter) {
 		admin.GET("/roles", ra.List)                           // get role list
 		admin.POST("/roles", ra.Create)                        // mew role
 		admin.POST("/role/:rid/details", ra.UpdateRoleDetails) // upt role details by role-id
-		admin.POST("/role/:rid/menus", ra.UpdateMenus)
-		//admin.POST("/role/:rid/apis", ra.UpdateApis)
-		//admin.DELETE("/role/:rid/record", ra.UpdateApis)
+		admin.GET("/role/:rid/menus", ra.GetRoleMenus)         // get role menu by role-id
+		admin.POST("/role/:rid/menus", ra.UpdateMenus)         // upt role menu by role-id
+		admin.DELETE("/role/:rid/record", ra.DeleteRole)       // del role by role-id
 	}
 	{
 		ma := v1.DefaultMenuApp()

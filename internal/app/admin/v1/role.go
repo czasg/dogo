@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"proj/internal/domain/model"
+	"proj/internal/service"
 	"proj/lifecycle"
 	"proj/public/httplib"
 	"proj/public/utils"
@@ -15,12 +16,15 @@ import (
 
 func DefaultRoleApp() *RoleApp {
 	return &RoleApp{
-		roleService: model.RoleService{DB: lifecycle.MySQL},
+		roleService:     model.RoleService{DB: lifecycle.MySQL},
+		roleMenuService: model.RoleMenuService{DB: lifecycle.MySQL},
 	}
 }
 
 type RoleApp struct {
-	roleService model.RoleService
+	roleService     model.RoleService
+	roleMenuService model.RoleMenuService
+	menuSvc         service.MenuService
 }
 
 func (app *RoleApp) List(c *gin.Context) {
@@ -87,6 +91,50 @@ func (app *RoleApp) UpdateRoleDetails(c *gin.Context) {
 	httplib.Success(c, role)
 }
 
-func (app *RoleApp) UpdateMenus(c *gin.Context) {}
+func (app *RoleApp) GetRoleMenus(c *gin.Context) {
+	rid, err := strconv.ParseInt(c.Param("rid"), 10, 0)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	menus, err := app.roleMenuService.GetMenusByRoleID(c, rid)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	httplib.Success(c, app.menuSvc.Menus(menus))
+}
 
-func (app *RoleApp) UpdateApis(c *gin.Context) {}
+func (app *RoleApp) UpdateMenus(c *gin.Context) {
+	rid, err := strconv.ParseInt(c.Param("rid"), 10, 0)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	req := struct {
+		MenuIds []int64 `json:"menuIds"`
+	}{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	err = app.roleMenuService.Create(c, rid, req.MenuIds)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	httplib.Success(c, nil)
+}
+
+func (app *RoleApp) DeleteRole(c *gin.Context) {
+	rid, err := strconv.ParseInt(c.Param("rid"), 10, 0)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	if err := app.roleService.DeleteByID(c, rid); err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	httplib.Success(c, nil)
+}

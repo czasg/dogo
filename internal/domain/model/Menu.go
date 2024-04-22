@@ -76,12 +76,39 @@ type RoleMenu struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
 	RoleID    int64     `json:"roleID"`
 	MenuID    int64     `json:"menuID"`
-	Role      Role      `gorm:"foreignKey:RoleID"`
-	Menu      Menu      `gorm:"foreignKey:MenuID"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (RoleMenu) TableName() string {
 	return "role_menus"
+}
+
+type RoleMenuService struct {
+	DB *gorm.DB
+}
+
+func (rs *RoleMenuService) GetMenusByRoleID(ctx context.Context, id int64) ([]Menu, error) {
+	rms := []int64{}
+	err := rs.DB.WithContext(ctx).Model(&RoleMenu{}).Where("role_id = ?", id).Select("menu_id").Find(&rms).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	menus := []Menu{}
+	err = rs.DB.WithContext(ctx).Where("id IN ?", rms).Find(&menus).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	return menus, nil
+}
+
+func (rs *RoleMenuService) Create(ctx context.Context, roleId int64, menuIds []int64) error {
+	um := []RoleMenu{}
+	for _, menuId := range menuIds {
+		um = append(um, RoleMenu{
+			RoleID: roleId,
+			MenuID: menuId,
+		})
+	}
+	return rs.DB.WithContext(ctx).CreateInBatches(um, 100).Error
 }

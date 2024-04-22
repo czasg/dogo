@@ -210,30 +210,22 @@ func (rs *RoleService) ExistsByRoleID(ctx context.Context, ids ...int64) (bool, 
 	return len(roles) == len(ids), nil
 }
 
-func (us *RoleService) Create(ctx context.Context, role *Role) error {
-	if err := us.DB.WithContext(ctx).Create(role).Error; err != nil {
+func (rs *RoleService) Create(ctx context.Context, role *Role) error {
+	if err := rs.DB.WithContext(ctx).Create(role).Error; err != nil {
 		return fmt.Errorf("failed to create role: %w", err)
 	}
 	return nil
 }
 
-/*
-CREATE TABLE user_roles (
-    user_id INT,
-    role_id INT,
-    PRIMARY KEY (user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES user(id),
-    FOREIGN KEY (role_id) REFERENCES role(id)
-);
-*/
+func (rs *RoleService) DeleteByID(ctx context.Context, ids ...int64) error {
+	return rs.DB.WithContext(ctx).Delete(&Role{}, ids).Error
+}
 
 // UserRoleModel
 type UserRole struct {
 	ID        int64     `json:"id" gorm:"primaryKey"`
 	UserID    int64     `json:"userID"`
 	RoleID    int64     `json:"roleID"`
-	User      User      `gorm:"foreignKey:UserID"`
-	Role      Role      `gorm:"foreignKey:RoleID"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
