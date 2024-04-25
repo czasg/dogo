@@ -1,14 +1,20 @@
 package service
 
 import (
+	"context"
 	"proj/internal/domain/model"
 )
-
-type MenuService struct{}
 
 type Menus struct {
 	model.Menu
 	Submenu []Menus `json:"submenu"`
+}
+
+type MenuService struct {
+	UserService     model.UserService
+	RoleService     model.RoleService
+	MenuService     model.MenuService
+	RoleMenuService model.RoleMenuService
 }
 
 func (ms *MenuService) Menus(menus []model.Menu) []Menus {
@@ -30,4 +36,20 @@ func (ms *MenuService) Menus(menus []model.Menu) []Menus {
 		}
 	}
 	return ans
+}
+
+func (ms *MenuService) MenusByUserID(ctx context.Context, id int64) ([]Menus, error) {
+	roles, err := ms.UserService.QueryUserRoleByID(ctx, id)
+	if err != nil {
+		return nil, nil
+	}
+	rid := []int64{}
+	for _, role := range roles {
+		rid = append(rid, role.ID)
+	}
+	menus, err := ms.RoleMenuService.GetMenusByRoleID(ctx, rid...)
+	if err != nil {
+		return nil, nil
+	}
+	return ms.Menus(menus), nil
 }

@@ -20,6 +20,7 @@ func Bind(app gin.IRouter) {
 		admin.POST("/user/:uid/password", ua.UpdateUserPassword) // upt user password by user-id
 		admin.GET("/user/:uid/roles", ua.UserRoleList)           // get user role by user-id
 		admin.POST("/user/:uid/roles", ua.UpdateUserRole)        // upt user role by user-id
+		admin.GET("/user/:uid/menus", ua.GetUserMenu)            // get user menu by user-id
 		admin.POST("/user/:uid/enable", ua.UpdateUserEnable)     // upt user enable by user-id
 		admin.DELETE("/user/:uid/record", ua.DeleteUser)         // del user by user-id
 	}

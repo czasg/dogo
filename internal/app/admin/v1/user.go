@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"proj/internal/domain/middleware/auth"
 	"proj/internal/domain/model"
+	"proj/internal/service"
 	"proj/lifecycle"
 	"proj/public/httplib"
 	"proj/public/utils"
@@ -16,16 +17,18 @@ import (
 
 func DefaultUserApp() *UserApp {
 	return &UserApp{
-		userService: model.UserService{DB: lifecycle.MySQL},
-		jwtService:  auth.JwtService{Cache: lifecycle.Redis},
-		hash:        utils.NewHash(nil),
+		userService:     model.UserService{DB: lifecycle.MySQL},
+		roleMenuService: model.RoleMenuService{DB: lifecycle.MySQL},
+		jwtService:      auth.JwtService{Cache: lifecycle.Redis},
+		hash:            utils.NewHash(nil),
 	}
 }
 
 type UserApp struct {
-	userService model.UserService
-	jwtService  auth.JwtService
-	hash        utils.Hash
+	userService     model.UserService
+	roleMenuService model.RoleMenuService
+	jwtService      auth.JwtService
+	hash            utils.Hash
 }
 
 func (app *UserApp) Login(c *gin.Context) {
@@ -254,12 +257,12 @@ func (app *UserApp) UserRoleList(c *gin.Context) {
 		httplib.Failure(c, err)
 		return
 	}
-	users, err := app.userService.QueryUserRoleByID(c, uid)
+	roles, err := app.userService.QueryUserRoleByID(c, uid)
 	if err != nil {
 		httplib.Failure(c, err)
 		return
 	}
-	httplib.Success(c, users)
+	httplib.Success(c, roles)
 }
 
 func (app *UserApp) UpdateUserRole(c *gin.Context) {
@@ -281,6 +284,24 @@ func (app *UserApp) UpdateUserRole(c *gin.Context) {
 		return
 	}
 	httplib.Success(c, nil)
+}
+
+func (app *UserApp) GetUserMenu(c *gin.Context) {
+	uid, err := strconv.ParseInt(c.Param("uid"), 10, 0)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	svc := &service.MenuService{
+		UserService:     app.userService,
+		RoleMenuService: app.roleMenuService,
+	}
+	menus, err := svc.MenusByUserID(c, uid)
+	if err != nil {
+		httplib.Failure(c, err)
+		return
+	}
+	httplib.Success(c, menus)
 }
 
 func (app *UserApp) UpdateUserEnable(c *gin.Context) {

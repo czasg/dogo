@@ -88,9 +88,9 @@ type RoleMenuService struct {
 	DB *gorm.DB
 }
 
-func (rs *RoleMenuService) GetMenusByRoleID(ctx context.Context, id int64) ([]Menu, error) {
+func (rs *RoleMenuService) GetMenusByRoleID(ctx context.Context, ids ...int64) ([]Menu, error) {
 	rms := []int64{}
-	err := rs.DB.WithContext(ctx).Model(&RoleMenu{}).Where("role_id = ?", id).Select("menu_id").Find(&rms).Error
+	err := rs.DB.WithContext(ctx).Model(&RoleMenu{}).Where("role_id IN ?", ids).Select("menu_id").Find(&rms).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
